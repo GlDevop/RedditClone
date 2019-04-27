@@ -7,6 +7,7 @@ import android.arch.paging.PagedList
 import android.support.v7.app.AppCompatActivity
 import android.os.Bundle
 import android.support.v7.widget.LinearLayoutManager
+import gabriellee.project.redditclone.database.RedditDb
 import gabriellee.project.redditclone.networking.RedditPost
 
 import kotlinx.android.synthetic.main.activity_main.*
@@ -36,13 +37,15 @@ class MainActivity : AppCompatActivity() {
         list.adapter = adapter
     }
 
-    private fun initializedPagedListBuilder(config: PagedList.Config): LivePagedListBuilder<String, RedditPost> {
-        val dataSourceFactory = object : DataSource.Factory<String, RedditPost>() {
-            override fun create(): DataSource<String, RedditPost> {
-                return RedditDataSource()
-            }
-        }
+    private fun initializedPagedListBuilder(config: PagedList.Config):
+            LivePagedListBuilder<Int, RedditPost> {
 
-        return LivePagedListBuilder<String, RedditPost>(dataSourceFactory, config)
+        val database = RedditDb.create(this)
+        val livePageListBuilder = LivePagedListBuilder<Int, RedditPost>(
+            database.postDao().posts(),
+            config)
+
+        livePageListBuilder.setBoundaryCallback(RedditBoundaryCallback(database))
+        return livePageListBuilder
     }
 }

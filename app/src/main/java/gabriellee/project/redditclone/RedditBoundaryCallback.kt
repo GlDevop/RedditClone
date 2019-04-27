@@ -32,10 +32,15 @@
 package gabriellee.project.redditclone
 
 import android.arch.paging.PagedList
+import android.util.Log
 import gabriellee.project.redditclone.database.RedditDb
+import gabriellee.project.redditclone.networking.RedditApiResponse
 import gabriellee.project.redditclone.networking.RedditPost
 import gabriellee.project.redditclone.networking.RedditService
 import gabriellee.project.redditclone.utils.PagingRequestHelper
+import retrofit2.Call
+import retrofit2.Callback
+import retrofit2.Response
 import java.util.concurrent.Executors
 
 class RedditBoundaryCallback(private val db: RedditDb) :
@@ -47,9 +52,55 @@ class RedditBoundaryCallback(private val db: RedditDb) :
 
   override fun onZeroItemsLoaded() {
     super.onZeroItemsLoaded()
+    helper.runIfNotRunning(PagingRequestHelper.RequestType.INITIAL) { helperCallback ->
+      api.getPosts()
+        //2
+        .enqueue(object : Callback<RedditApiResponse> {
+
+          override fun onFailure(call: Call<RedditApiResponse>?, t: Throwable) {
+            //3
+            Log.e("RedditBoundaryCallback", "Failed to load data!")
+            helperCallback.recordFailure(t)
+          }
+
+          override fun onResponse(
+            call: Call<RedditApiResponse>?,
+            response: Response<RedditApiResponse>
+          ) {
+            //4
+            val posts = response.body()?.data?.children?.map { it.data }
+            executor.execute {
+              db.postDao().insert(posts ?: listOf())
+              helperCallback.recordSuccess()
+            }
+          }
+        })
+    }
+
   }
 
   override fun onItemAtEndLoaded(itemAtEnd: RedditPost) {
     super.onItemAtEndLoaded(itemAtEnd)
+    helper.runIfNotRunning(PagingRequestHelper.RequestType.AFTER) { helperCallback ->
+      api.getPosts(after = itemAtEnd.key)
+        .enqueue(object : Callback<RedditApiResponse> {
+
+          override fun onFailure(call: Call<RedditApiResponse>?, t: Throwable) {
+            Log.e("RedditBoundaryCallback", "Failed to load data!")
+            helperCallback.recordFailure(t)
+          }
+
+          override fun onResponse(
+            call: Call<RedditApiResponse>?,
+            response: Response<RedditApiResponse>) {
+
+            val posts = response.body()?.data?.children?.map { it.data }
+            executor.execute {
+              db.postDao().insert(posts ?: listOf())
+              helperCallback.recordSuccess()
+            }
+          }
+        })
+    }
   }
 }

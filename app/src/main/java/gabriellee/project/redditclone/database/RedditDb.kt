@@ -43,10 +43,13 @@ import gabriellee.project.redditclone.networking.RedditPost
 )
 abstract class RedditDb : RoomDatabase() {
 
-  companion object {
-    fun create(context: Context): RedditDb {
-      val databaseBuilder = Room.databaseBuilder(context, RedditDb::class.java, "redditclone.db")
-      return databaseBuilder.build()
+    companion object {
+        fun create(context: Context): RedditDb {
+            val databaseBuilder = Room.databaseBuilder(context, RedditDb::class.java, "redditclone.db")
+            return databaseBuilder.build()
+        }
     }
-  }
+
+    abstract fun postDao(): RedditPostDao
+
 }

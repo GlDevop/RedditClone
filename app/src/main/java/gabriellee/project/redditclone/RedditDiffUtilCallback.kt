@@ -36,14 +36,13 @@ import gabriellee.project.redditclone.networking.RedditPost
 class RedditDiffUtilCallback : DiffUtil.ItemCallback<RedditPost>() {
 
     override fun areItemsTheSame(p0: RedditPost, p1: RedditPost): Boolean {
-        return p0?.key == p1?.key
+        return p0.key == p1.key
     }
 
     override fun areContentsTheSame(p0: RedditPost, p1: RedditPost): Boolean {
-        return p0?.title == p1?.title
-                && p0?.score == p1?.score
-                && p0?.commentCount == p1?.commentCount
+        return p0.title == p1.title
+                && p0.score == p1.score
+                && p0.commentCount == p1.commentCount
     }
-
 
 }
